@@ -92,7 +92,7 @@ Hard invariants, each enforced by a test:
 Zero dependencies. Node 18+.
 
 ```bash
-git clone https://github.com/USER/dsh-go-reasoning-splitter.git
+git clone https://github.com/txxt114514/Fix-OpenCode-Go-thinking-answer-mix-up-empty-content-reasoning-leak-.git
 cd dsh-go-reasoning-splitter
 node server.js
 ```
