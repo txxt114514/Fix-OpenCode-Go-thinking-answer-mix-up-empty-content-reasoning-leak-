@@ -126,9 +126,13 @@ cannot be abused as an open relay.
 | `UPSTREAM_TLS` | `1` | set `0` for plaintext upstream (tests) |
 | `RS_BACKFILL` | `1` | enable situation A backfill |
 | `RS_SPLIT` | `1` | enable situation B separation |
+| `RS_HOLD` | `0` | `1` = never forward `reasoning_content` at all. The client sees only the answer; if the upstream produced none, the collected reasoning is promoted to content at the end. Use this when the client renders thinking text and you do not want it shown. |
 | `RS_MODE` | `blank` | `blank` = set `reasoning_content:""`; `delete` = remove the key |
 | `RS_DEBUG` | `0` | also print log lines to stdout |
 | `RS_LOG` | `./proxy.log` | log file path |
+
+The proxy also writes its own pid to `.pid` next to `server.js` at startup. Use
+that file to identify the instance — see the supervision notes below.
 
 Every proxied response writes one line to the log:
 
@@ -137,6 +141,31 @@ Every proxied response writes one line to the log:
 ms=4210 | content_seen=38 | content_chars=38 | reasoning_chars=305 |
 tool_calls=0 | backfilled=false | split_cleared=0 | phase=answering
 ```
+
+---
+
+## Supervising it (mistakes worth not repeating)
+
+These are failure modes observed while running this proxy as a long-lived
+Windows service. They cost real debugging time; none of them are obvious.
+
+- **Identify your instance by the pid file, never by the command line.** A node
+  process started from an elevated context often reports an *empty* command line
+  to WMI. A supervisor that treats "unreadable command line" as "not my
+  instance" kills and restarts the proxy on **every pass**. The `.pid` write at
+  startup exists precisely for this.
+- **Do not put it behind a short periodic task before it is proven.** A
+  supervisor on a five-minute timer that keeps failing to recognise its own
+  instance becomes a five-minute restart loop — and from the client side that
+  looks exactly like a network outage.
+- **Only `/zen/go/*` is proxied.** Everything else returns 404, so a
+  misconfigured base URL fails loudly instead of turning the process into an
+  open relay.
+- **The log lines are the truth.** `content_chars` is what the *upstream* sent,
+  `backfilled` says whether this proxy had to rescue an empty answer, and
+  `split_cleared` counts the reasoning deltas it suppressed after the answer
+  started. If all three are zero on a stream you know was broken, the proxy is
+  not in the request path.
 
 ---
 

@@ -56,6 +56,10 @@ const CFG = {
   backfill: process.env.RS_BACKFILL !== '0',
   split: process.env.RS_SPLIT !== '0',
   mode: process.env.RS_MODE === 'delete' ? 'delete' : 'blank',
+  // RS_HOLD=1: never forward reasoning at all. The answer is the only thing the
+  // client sees; if the upstream never produced one, the collected reasoning is
+  // promoted to content at the end (backfill). Set 0 to see thinking again.
+  hold: process.env.RS_HOLD === '1',
 };
 
 /* ---------------------------------------------------------------- 日志 */
@@ -131,7 +135,7 @@ class StreamFixer {
     this.write = write;                 // (string) => void
     this.cfg = cfg;
     this.buf = '';
-    this.splitter = new ReasonSplitter({ enabled: cfg.split, mode: cfg.mode });
+    this.splitter = new ReasonSplitter({ enabled: cfg.split, mode: cfg.mode, holdReasoningUntilAnswer: cfg.hold });
 
     this.contentSeen = 0;
     this.contentChars = 0;
@@ -327,9 +331,13 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  logLine({ mode: 'start', listen: HOST + ':' + PORT, upstream: UPSTREAM_HOST + ':' + UPSTREAM_PORT, tls: UPSTREAM_TLS, backfill: CFG.backfill, split: CFG.split, strip: CFG.mode });
+  // Record our pid so a supervisor script can tell our instance apart from
+  // anything else that happens to hold the port. The command line of an
+  // elevated node process is not always readable, so matching on it is unsafe.
+  try { fs.writeFileSync(path.join(__dirname, '.pid'), String(process.pid)); } catch (_) {}
+  logLine({ mode: 'start', listen: HOST + ':' + PORT, upstream: UPSTREAM_HOST + ':' + UPSTREAM_PORT, tls: UPSTREAM_TLS, backfill: CFG.backfill, split: CFG.split, strip: CFG.mode, hold: CFG.hold });
   console.log('dsh-go-reasoning-splitter listening on http://' + HOST + ':' + PORT);
   console.log('  point your client at: http://' + HOST + ':' + PORT + '/zen/go/v1');
   console.log('  upstream: ' + (UPSTREAM_TLS ? 'https' : 'http') + '://' + UPSTREAM_HOST + ':' + UPSTREAM_PORT);
-  console.log('  backfill(A)=' + CFG.backfill + '  split(B)=' + CFG.split + '  strip=' + CFG.mode);
+  console.log('  backfill(A)=' + CFG.backfill + '  split(B)=' + CFG.split + '  strip=' + CFG.mode + '  holdThinking=' + CFG.hold);
 });

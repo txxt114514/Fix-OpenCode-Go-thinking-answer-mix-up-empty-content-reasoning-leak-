@@ -2,4 +2,6 @@ node_modules/
 *.log
 proxy.log
 e2e-proxy.log
-.DS_Store
+.pid
+_t*.json
+*.bak-*
