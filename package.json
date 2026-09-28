@@ -1,0 +1,38 @@
+{
+  "name": "dsh-go-reasoning-splitter",
+  "version": "0.1.0",
+  "description": "A tiny reverse proxy that fixes OpenCode Go's thinking/answer mix-up: backfills an empty content field from reasoning_content, and stops reasoning from leaking after the answer starts.",
+  "keywords": [
+    "opencode",
+    "opencode-go",
+    "deepseek",
+    "reasoning",
+    "reasoning-content",
+    "sse",
+    "proxy",
+    "dsh"
+  ],
+  "license": "MIT",
+  "main": "lib/reason-split.js",
+  "bin": {
+    "go-reasoning-splitter": "server.js"
+  },
+  "files": [
+    "server.js",
+    "lib/reason-split.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/reason-split.test.js && node test/server.e2e.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/USER/dsh-go-reasoning-splitter.git"
+  }
+}

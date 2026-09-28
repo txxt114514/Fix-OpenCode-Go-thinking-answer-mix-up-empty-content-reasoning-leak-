@@ -1,0 +1,5 @@
+node_modules/
+*.log
+proxy.log
+e2e-proxy.log
+.DS_Store
